@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Posto Impulso - Estoura o Balão</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Libre+Barcode+39+Text&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    
+    <style>
+        :root {
+            --p-blue: #004a99; /* Cor do posto */
+            --p-green: #28a745;
+            --p-yellow: #ffc107; /* Cor do posto */
+            --p-white: #ffffff;
+            --p-dark: #1a1a1a;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            /* Fundo com imagem do posto genérico gerado */
+            background-image: url('image_0.png'); 
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: var(--p-dark);
+            overflow: hidden;
+        }
+
+        /* Overlay escuro para garantir leitura */
+        body::before {
+            content: ''; position: absolute; top:0; left:0; width:100%; height:100%;
+            background: radial-gradient(circle, rgba(0,0,0,0.2) 0%, rgba(0,74,153, 0.6) 100%);
+        }
+
+        .ticket-wrapper {
+            position: relative; z-index: 1; background: var(--p-white);
+            width: 90%; max-width: 360px; border-radius: 20px;
+            padding: 25px 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+            display: flex; flex-direction: column; align-items: center;
+        }
+
+        .ticket-header { text-align: center; margin-bottom: 20px; }
+        .ticket-header h1 { font-size: 22px; margin: 0; color: var(--p-blue); text-transform: uppercase; }
+
+        /* Novo contêiner de balão */
+        .balloon-container {
+            position: relative;
+            width: 300px;
+            height: 150px;
+            margin: 0 auto;
+            border-radius: 10px;
+            overflow: hidden;
+            /* Manter a borda amarela para consistência de design da rede */
+            border: 4px solid var(--p-yellow);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            background: #eee;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Estilização do balão */
+        .balloon {
+            position: absolute;
+            width: 100px;
+            height: 120px;
+            background-color: var(--p-blue);
+            border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+            cursor: pointer;
+            transition: transform 0.2s ease, opacity 0.5s ease;
+            z-index: 5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .balloon::after {
+            content: '';
+            position: absolute;
+            bottom: -15px;
+            left: 42%;
+            border-left: 8px solid transparent;
+            border-right: 8px solid transparent;
+            border-top: 20px solid var(--p-blue);
+        }
+
+        .pop-instruction {
+            font-weight: bold;
+            color: var(--p-yellow);
+            text-transform: uppercase;
+            font-size: 14px;
+        }
+
+        /* Animação de estouro */
+        .balloon.popped {
+            animation: balloonPop 0.5s ease forwards;
+            pointer-events: none; /* Impede novos cliques */
+        }
+
+        @keyframes balloonPop {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2) translateY(-10px); opacity: 0.8; }
+            100% { transform: scale(0); opacity: 0; }
+        }
+
+        /* Para mostrar o prêmio */
+        .balloon-container .prize-content {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; flex-direction: column; justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            z-index: 1; /* Abaixo do balão inicialmente */
+        }
+
+        .balloon.popped ~ .prize-content {
+            opacity: 1;
+            z-index: 6; /* Acima do balão estourado */
+        }
+
+        .prize-text { font-size: 20px; font-weight: 800; color: var(--p-green); }
+
+        /* Nome do Posto embaixo */
+        .station-name {
+            text-align: center; font-weight: 900; color: var(--p-blue);
+            margin-top: 15px; font-size: 18px; text-transform: uppercase;
+        }
+
+        /* Modal */
+        #result-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10; align-items: center; justify-content: center; }
+        .coupon-box { background: white; padding: 30px; border-radius: 20px; text-align: center; width: 80%; }
+        .btn-claim { background: var(--p-yellow); border: none; padding: 12px 25px; border-radius: 50px; font-weight: bold; cursor: pointer; margin-top: 20px; }
+    </style>
+</head>
+<body>
+
+<div class="ticket-wrapper">
+    <div class="ticket-header">
+        <h1>Sorteio Premiado</h1>
+    </div>
+
+    <!-- Novo contêiner de balão -->
+    <div class="balloon-container" id="balloon-box">
+        <div class="balloon" id="pop-balloon">
+            <span class="pop-instruction">CLIQUE</span>
+        </div>
+        <div class="prize-content">
+            <span class="prize-text" id="prize-text">Carregando...</span>
+        </div>
+    </div>
+    
+    <!-- Novo Nome do Posto -->
+    <div class="station-name">Posto Impulso</div>
+</div>
+
+<div id="result-modal">
+    <div class="coupon-box">
+        <h2 id="modal-title">Parabéns!</h2>
+        <p id="modal-desc"></p>
+        <button class="btn-claim" onclick="window.location.reload()">Finalizar</button>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const balloon = document.getElementById('pop-balloon');
+        const prizeText = document.getElementById('prize-text');
+        
+        // Prêmios (pode manter os mesmos ou alterá-los)
+        const premios = [
+            { nome: "Tente novamente!", win: false },
+            { nome: "1 Água Mineral", win: true },
+            { nome: "1 Café", win: true } // Alterado de picolé para café para diferenciar
+        ];
+
+        // Sorteio
+        const sorteado = premios[Math.floor(Math.random() * premios.length)];
+        prizeText.innerText = sorteado.nome;
+
+        // Interação: clique ou toque
+        function popBalloon() {
+            if(balloon.classList.contains('popped')) return;
+
+            // Animação de estouro
+            balloon.classList.add('popped');
+
+            // Feedback Tátil (Vibração) - Opcional, mantendo do original
+            if (navigator.vibrate) navigator.vibrate(50); // Vibração mais forte para o estouro
+
+            // Acionar o modal e confetes (lógica existente)
+            setTimeout(() => {
+                document.getElementById('result-modal').style.display = 'flex';
+                document.getElementById('modal-desc').innerText = sorteado.nome;
+                if(sorteado.win) {
+                    document.getElementById('modal-title').innerText = "Você Ganhou! 🎉";
+                    confetti({ particleCount: 150, spread: 70 });
+                } else {
+                    document.getElementById('modal-title').innerText = "Poxa vida...";
+                }
+            }, 600); // Dar tempo para a animação do balão
+        }
+
+        // Adicionar ouvintes para clique e toque
+        balloon.addEventListener('click', popBalloon);
+        balloon.addEventListener('touchstart', (e) => { e.preventDefault(); popBalloon(); });
+    });
+</script>
+</body>
+</html>
