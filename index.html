@@ -335,6 +335,7 @@
       const restart = document.getElementById('restart-button');
       let alreadyPicked = false;
       const PRIZE_LOCK_KEY = 'posto-certo-7-premio-ganho';
+      const LOCK_TIME = 5 * 60 * 1000; // 5 minutos
 let roundPrize = null;
 
 function applyPrizeLock() {
@@ -344,11 +345,23 @@ function applyPrizeLock() {
   start.style.cursor = 'not-allowed';
 
   document.querySelector('.rules').textContent =
-    'Você já participou. Apresente a tela do prêmio no caixa.';
+    'Volte no seu próximo abastecimento acima de R$ 100 e tente a sorte novamente.';
 }
 
-if (localStorage.getItem(PRIZE_LOCK_KEY)) {
-  applyPrizeLock();
+const saved = JSON.parse(localStorage.getItem(PRIZE_LOCK_KEY));
+
+if (saved) {
+
+    if (Date.now() < saved.expiresAt) {
+
+        applyPrizeLock();
+
+    } else {
+
+        localStorage.removeItem(PRIZE_LOCK_KEY);
+
+    }
+
 }
 
       function makeBalloons() {
@@ -395,9 +408,8 @@ if (localStorage.getItem(PRIZE_LOCK_KEY)) {
       function showResult(prize) {
         if (prize.win) {
   localStorage.setItem(PRIZE_LOCK_KEY, JSON.stringify({
-    prize: prize.name,
-    date: new Date().toISOString()
-  }));
+    expiresAt: Date.now() + LOCK_TIME
+}));
 }
         const title = document.getElementById('result-title');
         const copy = document.getElementById('result-copy');
