@@ -88,8 +88,11 @@
     }
 
     .brand {
-  width: 100%;
-    }
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
     .brand-logo {
       display: block;
       width: 100%;
@@ -99,6 +102,13 @@
       object-position: center;
       box-shadow: 0 5px 12px rgba(6, 61, 131, .13);
     }
+    .station-label {
+  color: var(--navy);
+  font-size: 15px;
+  font-weight: 950;
+  letter-spacing: .14em;
+  text-align: center;
+}
     .chance {
   align-self: flex-end;
     }
@@ -247,8 +257,7 @@
       <header class="brandbar">
         <div class="brand" aria-label="Posto Certo">
           <img class="brand-logo" src="marca-posto-certo.jpg" alt="Posto Certo">
-        </div>
-        <span class="chance"><i></i> 1 chance</span>
+<span class="station-label">POSTO CERTO 7</span>
       </header>
 
       <section class="screen intro active" id="intro-screen" aria-labelledby="intro-title">
@@ -294,6 +303,9 @@
       </section>
     </section>
   </main>
+  <audio id="win-sound" preload="auto">
+  <source src="premio.mp3" type="audio/mpeg">
+</audio>
 
   <script>
     (() => {
@@ -314,6 +326,7 @@
       ];
 
       const intro = document.getElementById('intro-screen');
+      const winSound = document.getElementById('win-sound');
       const game = document.getElementById('game-screen');
       const grid = document.getElementById('balloon-grid');
       const layer = document.getElementById('result-layer');
@@ -321,6 +334,22 @@
       const start = document.getElementById('start-button');
       const restart = document.getElementById('restart-button');
       let alreadyPicked = false;
+      const PRIZE_LOCK_KEY = 'posto-certo-7-premio-ganho';
+let roundPrize = null;
+
+function applyPrizeLock() {
+  start.disabled = true;
+  start.innerHTML = 'Você já recebeu seu prêmio ✓';
+  start.style.opacity = '.65';
+  start.style.cursor = 'not-allowed';
+
+  document.querySelector('.rules').textContent =
+    'Você já participou. Apresente a tela do prêmio no caixa.';
+}
+
+if (localStorage.getItem(PRIZE_LOCK_KEY)) {
+  applyPrizeLock();
+}
 
       function makeBalloons() {
         grid.innerHTML = '';
@@ -347,6 +376,7 @@
         if (alreadyPicked) return;
         alreadyPicked = true;
         const prize = drawPrize();
+        roundPrize = prize;
         const balloons = [...grid.querySelectorAll('.balloon-button')];
         balloons.forEach(balloon => {
           balloon.disabled = true;
@@ -354,11 +384,21 @@
         });
         selected.classList.add('pop');
         if (navigator.vibrate) navigator.vibrate([35, 30, 65]);
-        if (prize.win) releaseConfetti();
+        if (prize.win) {
+  winSound.currentTime = 0;
+  winSound.play().catch(() => {});
+  releaseConfetti();
+}
         window.setTimeout(() => showResult(prize), 560);
       }
 
       function showResult(prize) {
+        if (prize.win) {
+  localStorage.setItem(PRIZE_LOCK_KEY, JSON.stringify({
+    prize: prize.name,
+    date: new Date().toISOString()
+  }));
+}
         const title = document.getElementById('result-title');
         const copy = document.getElementById('result-copy');
         const name = document.getElementById('prize-name');
@@ -391,6 +431,10 @@
       }
 
       function resetGame() {
+        if (localStorage.getItem(PRIZE_LOCK_KEY)) {
+  applyPrizeLock();
+  return;
+}
         layer.classList.remove('visible');
         card.classList.remove('lose');
         alreadyPicked = false;
@@ -400,7 +444,14 @@
       }
 
       start.addEventListener('click', resetGame);
-      restart.addEventListener('click', resetGame);
+      restart.addEventListener('click', () => {
+  if (roundPrize?.win) {
+    window.location.reload();
+    return;
+  }
+
+  resetGame();
+});
       makeBalloons();
     })();
   </script>
