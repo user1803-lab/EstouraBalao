@@ -253,7 +253,7 @@
 
       <section class="screen intro active" id="intro-screen" aria-labelledby="intro-title">
         <div class="station-photo" role="img" aria-label="Fachada do Posto Certo à noite"></div>
-        <p class="eyebrow">Promoção especial</p>
+        <p class="eyebrow">Av. Nossa Sra. de Fátima, 183 - Jóquei, Teresina - PI, 64049-140</p>
         <h1 id="intro-title">Aperte o play e <em>estoure</em> a sorte.</h1>
         <p class="intro-copy">Escolha um balão e descubra o seu presente. É rápido, divertido e pode render uma pausa gostosa na sua viagem.</p>
         <div class="hero-balloons" aria-hidden="true">
@@ -306,9 +306,11 @@
       // Ajuste estes prêmios e probabilidades para a campanha.
       // Em promoção real, o sorteio precisa acontecer no servidor, nunca só neste arquivo.
       const prizes = [
-        { name: '1 Café', message: 'Uma pausa por nossa conta. Aproveite!', win: true, chance: 34 },
-        { name: '1 Água Mineral', message: 'Um presente para refrescar seu caminho.', win: true, chance: 33 },
-        { name: 'Tente novamente', message: 'Dessa vez não foi, mas a sua sorte está só começando.', win: false, chance: 33 }
+        { name: '1 Água Mineral', message: 'Um presente para refrescar seu caminho.', win: true, chance: 18 },
+        { name: '1 Picolé', message: 'Uma pausa geladinha por nossa conta.', win: true, chance: 21 },
+        { name: '1 Aditivo para radiador', message: 'Um cuidado extra para o motor do seu carro.', win: false, chance: 18 },
+        { name: '1 Aditivo limpa-para-brisa', message: 'Mais visibilidade para você seguir viagem.', win: false, chance: 18 },
+        { name: 'Tente novamente', message: 'Dessa vez não foi, mas a sua sorte está só começando.', win: false, chance: 25 }
       ];
 
       const intro = document.getElementById('intro-screen');
