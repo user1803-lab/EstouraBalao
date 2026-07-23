@@ -306,6 +306,10 @@
   <audio id="win-sound" preload="auto">
   <source src="premio.mp3" type="audio/mpeg">
 </audio>
+  
+  <audio id="pop-sound" preload="auto">
+    <source src="estouro.mp3" type="audio/mpeg">
+</audio>
 
   <script>
     (() => {
@@ -327,6 +331,7 @@
 
       const intro = document.getElementById('intro-screen');
       const winSound = document.getElementById('win-sound');
+      const popSound = document.getElementById('pop-sound');
       const game = document.getElementById('game-screen');
       const grid = document.getElementById('balloon-grid');
       const layer = document.getElementById('result-layer');
@@ -396,10 +401,14 @@ if (saved) {
           if (balloon !== selected) balloon.classList.add('faded');
         });
         selected.classList.add('pop');
+        popSound.currentTime = 0;
+popSound.play().catch(() => {});
         if (navigator.vibrate) navigator.vibrate([35, 30, 65]);
         if (prize.win) {
-  winSound.currentTime = 0;
-  winSound.play().catch(() => {});
+  setTimeout(() => {
+    winSound.currentTime = 0;
+    winSound.play().catch(() => {});
+}, 250);
   releaseConfetti();
 }
         window.setTimeout(() => showResult(prize), 560);
